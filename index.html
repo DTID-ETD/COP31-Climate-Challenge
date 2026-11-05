@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>COP31 Climate Challenge | DTID</title>
+<style>
+  :root {
+    --dk: #0C3E4D;
+    --am: #BA7517;
+    --gn: #1B8C4E;
+    --lt: #E8F5F0;
+    --bg: #F4F8FA;
+    --white: #FFFFFF;
+    --text: #1A1A1A;
+    --muted: #607D8B;
+    --correct: #1B8C4E;
+    --wrong: #C0392B;
+    --radius: 14px;
+    --shadow: 0 4px 20px rgba(12,62,77,.13);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; flex-direction: column; align-items: center; min-height: 100vh; padding: 24px 20px 32px; }
+  .screen.active { display: flex; }
+
+  /* ── HEADER LOGO ── */
+  .dtid-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .logo-globe { width: 44px; height: 44px; border-radius: 50%; background: var(--dk); display: flex; align-items: center; justify-content: center; }
+  .logo-globe svg { width: 26px; height: 26px; }
+  .logo-text { display: flex; flex-direction: column; }
+  .logo-text .dtid { font-size: 20px; font-weight: 800; color: var(--dk); letter-spacing: 1px; line-height: 1; }
+  .logo-text .sub { font-size: 9px; color: var(--muted); letter-spacing: .3px; line-height: 1.3; }
+  .cop-badge { background: var(--am); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: .5px; margin-top: 2px; }
+
+  /* ── WELCOME ── */
+  #welcome { justify-content: space-between; }
+  .welcome-top { width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
+  .game-title { font-size: 28px; font-weight: 800; color: var(--dk); text-align: center; margin: 20px 0 6px; line-height: 1.15; }
+  .game-subtitle { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 24px; }
+  .rounds-preview { width: 100%; max-width: 380px; }
+  .round-pill { display: flex; align-items: center; gap: 12px; background: var(--white); border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(12,62,77,.08); }
+  .round-pill .rdate { font-size: 11px; font-weight: 700; color: var(--white); background: var(--dk); border-radius: 6px; padding: 3px 7px; white-space: nowrap; }
+  .round-pill .rinfo { flex: 1; }
+  .round-pill .rpav { font-size: 10px; color: var(--am); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+  .round-pill .rtopic { font-size: 12px; color: var(--text); font-weight: 600; line-height: 1.3; }
+  .welcome-bottom { width: 100%; max-width: 380px; }
+  .name-label { font-size: 13px; font-weight: 600; color: var(--dk); margin-bottom: 6px; }
+  .name-input { width: 100%; padding: 13px 16px; border: 2px solid #D0E4EC; border-radius: 10px; font-size: 16px; color: var(--text); outline: none; background: var(--white); transition: border .2s; }
+  .name-input:focus { border-color: var(--dk); }
+  .btn-primary { width: 100%; padding: 16px; background: var(--dk); color: var(--white); border: none; border-radius: var(--radius); font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 12px; letter-spacing: .3px; transition: opacity .15s, transform .1s; }
+  .btn-primary:active { opacity: .85; transform: scale(.98); }
+  .btn-secondary { width: 100%; padding: 13px; background: transparent; color: var(--dk); border: 2px solid var(--dk); border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: opacity .15s; }
+  .btn-secondary:active { opacity: .7; }
+  .game-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 10px; }
+
+  /* ── ROUND INTRO ── */
+  #roundIntro { justify-content: center; }
+  .round-intro-card { width: 100%; max-width: 360px; background: var(--white); border-radius: 20px; box-shadow: var(--shadow); padding: 32px 24px; text-align: center; }
+  .round-num { font-size: 12px; font-weight: 700; color: var(--am); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .round-pavilion { font-size: 22px; font-weight: 800; color: var(--dk); margin-bottom: 6px; line-height: 1.2; }
+  .round-event { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.4; }
+  .round-date-pill { display: inline-block; background: var(--lt); color: var(--gn); font-size: 13px; font-weight: 700; padding: 6px 16px; border-radius: 20px; margin-bottom: 24px; }
+  .round-icon { font-size: 52px; margin-bottom: 20px; }
+  .round-qs-info { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+  /* ── QUESTION ── */
+  #question { justify-content: flex-start; }
+  .q-header { width: 100%; max-width: 420px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .q-round-label { font-size: 11px; font-weight: 700; color: var(--am); text-transform: uppercase; letter-spacing: .5px; }
+  .q-score-label { font-size: 13px; font-weight: 700; color: var(--dk); }
+  .timer-wrap { width: 100%; max-width: 420px; height: 6px; background: #D8E8EE; border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
+  .timer-bar { height: 100%; background: var(--gn); border-radius: 3px; transition: width 1s linear, background .3s; }
+  .q-progress { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 8px; }
+  .q-text { width: 100%; max-width: 420px; font-size: 18px; font-weight: 700; color: var(--dk); line-height: 1.4; margin-bottom: 24px; min-height: 60px; }
+  .options { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 10px; }
+  .opt-btn { width: 100%; padding: 15px 18px; background: var(--white); border: 2px solid #D0E4EC; border-radius: var(--radius); font-size: 15px; font-weight: 500; color: var(--text); text-align: left; cursor: pointer; transition: all .15s; line-height: 1.35; }
+  .opt-btn:active { transform: scale(.98); }
+  .opt-btn.correct { background: #E8F8EF; border-color: var(--correct); color: var(--correct); font-weight: 700; }
+  .opt-btn.wrong { background: #FCECEA; border-color: var(--wrong); color: var(--wrong); }
+  .opt-btn.disabled { pointer-events: none; }
+  .opt-btn .opt-letter { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #E8F0F4; color: var(--dk); font-size: 11px; font-weight: 800; text-align: center; line-height: 24px; margin-right: 10px; flex-shrink: 0; }
+  .opt-btn.correct .opt-letter { background: var(--correct); color: #fff; }
+  .opt-btn.wrong .opt-letter { background: var(--wrong); color: #fff; }
+  .feedback-box { width: 100%; max-width: 420px; margin-top: 14px; padding: 12px 16px; border-radius: 10px; font-size: 13px; line-height: 1.5; display: none; }
+  .feedback-box.show { display: block; }
+  .feedback-box.correct { background: #E8F8EF; color: #145A32; border-left: 4px solid var(--correct); }
+  .feedback-box.wrong { background: #FCECEA; color: #922B21; border-left: 4px solid var(--wrong); }
+  .next-btn { width: 100%; max-width: 420px; padding: 15px; background: var(--dk); color: var(--white); border: none; border-radius: var(--radius); font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 14px; display: none; }
+  .next-btn.show { display: block; }
+
+  /* ── ROUND COMPLETE ── */
+  #roundComplete { justify-content: center; }
+  .round-complete-card { width: 100%; max-width: 360px; background: var(--white); border-radius: 20px; box-shadow: var(--shadow); padding: 32px 24px; text-align: center; }
+  .rc-emoji { font-size: 56px; margin-bottom: 12px; }
+  .rc-title { font-size: 22px; font-weight: 800; color: var(--dk); margin-bottom: 8px; }
+  .rc-score { font-size: 48px; font-weight: 900; color: var(--gn); margin: 10px 0; }
+  .rc-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  .rc-next-label { font-size: 12px; color: var(--am); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+
+  /* ── GAME COMPLETE ── */
+  #gameComplete { justify-content: space-between; }
+  .gc-top { width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .gc-badge { font-size: 72px; margin: 16px 0 8px; }
+  .gc-badge-name { font-size: 22px; font-weight: 800; color: var(--dk); margin-bottom: 4px; }
+  .gc-badge-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+  .gc-score-ring { width: 130px; height: 130px; border-radius: 50%; background: conic-gradient(var(--gn) 0%, var(--gn) var(--pct, 0%), #D8E8EE var(--pct, 0%) 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; position: relative; }
+  .gc-score-ring::before { content: ''; position: absolute; width: 96px; height: 96px; border-radius: 50%; background: var(--white); }
+  .gc-score-inner { position: relative; z-index: 1; text-align: center; }
+  .gc-score-num { font-size: 32px; font-weight: 900; color: var(--dk); line-height: 1; }
+  .gc-score-denom { font-size: 13px; color: var(--muted); }
+  .gc-round-breakdown { width: 100%; max-width: 380px; }
+  .gc-rb-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; text-align: center; }
+  .gc-rb-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #EEF4F7; font-size: 13px; }
+  .gc-rb-row .pav { color: var(--dk); font-weight: 600; flex: 1; }
+  .gc-rb-row .sc { font-weight: 800; color: var(--gn); }
+  .gc-bottom { width: 100%; max-width: 380px; }
+  .share-box { background: #EBF5F0; border-radius: 10px; padding: 12px 16px; font-size: 12px; color: var(--dk); margin-bottom: 12px; font-family: monospace; word-break: break-word; }
+  .btn-share { width: 100%; padding: 14px; background: var(--gn); color: var(--white); border: none; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+  .btn-share:active { opacity: .85; }
+  .copied-msg { font-size: 12px; color: var(--gn); text-align: center; height: 16px; transition: opacity .3s; }
+
+  /* ── LEADERBOARD ── */
+  #leaderboard { justify-content: flex-start; }
+  .lb-title { font-size: 22px; font-weight: 800; color: var(--dk); margin: 16px 0 20px; }
+  .lb-list { width: 100%; max-width: 380px; }
+  .lb-row { display: flex; align-items: center; gap: 12px; background: var(--white); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(12,62,77,.07); }
+  .lb-rank { width: 28px; height: 28px; border-radius: 50%; background: var(--dk); color: #fff; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .lb-rank.gold { background: #F0A500; }
+  .lb-rank.silver { background: #9E9E9E; }
+  .lb-rank.bronze { background: #A0522D; }
+  .lb-name { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); }
+  .lb-score { font-size: 16px; font-weight: 800; color: var(--gn); }
+  .lb-pct { font-size: 11px; color: var(--muted); }
+  .lb-empty { font-size: 14px; color: var(--muted); text-align: center; padding: 32px 0; }
+
+  /* ── PROGRESS DOTS ── */
+  .progress-dots { display: flex; gap: 6px; margin-bottom: 20px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #D0E4EC; }
+  .dot.done { background: var(--gn); }
+  .dot.active { background: var(--am); width: 20px; border-radius: 4px; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-up { animation: fadeUp .3s ease both; }
+  @keyframes pop { 0% { transform: scale(.8); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+  .pop { animation: pop .4s ease both; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ WELCOME ══════════════ -->
+<div id="welcome" class="screen active">
+  <div class="welcome-top fade-up">
+    <div class="dtid-logo">
+      <div class="logo-globe">
+        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="13" cy="13" r="11" stroke="white" stroke-width="1.5"/>
+          <ellipse cx="13" cy="13" rx="5" ry="11" stroke="white" stroke-width="1.5"/>
+          <line x1="2" y1="13" x2="24" y2="13" stroke="white" stroke-width="1.5"/>
+          <line x1="4" y1="8" x2="22" y2="8" stroke="white" stroke-width="1.2"/>
+          <line x1="4" y1="18" x2="22" y2="18" stroke="white" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="dtid">DTID</span>
+        <span class="sub">Digital Technology Institute<br>for Development</span>
+      </div>
+    </div>
+    <div class="cop-badge">COP31 · ANTALYA · TÜRKIYE · 2026</div>
+    <div class="game-title">Climate Challenge</div>
+    <div class="game-subtitle">5 rounds · 20 questions · 3 minutes</div>
+    <div class="rounds-preview" id="roundsPreview"></div>
+  </div>
+  <div class="welcome-bottom fade-up">
+    <div class="name-label">Your name</div>
+    <input class="name-input" id="playerName" type="text" placeholder="Enter your name" maxlength="30" autocomplete="off">
+    <button class="btn-primary" onclick="startGame()">Start Challenge</button>
+    <button class="btn-secondary" onclick="showLeaderboard()">View Leaderboard</button>
+    <div class="game-note">All times local to Türkiye · DTID ETD Division</div>
+  </div>
+</div>
+
+<!-- ══════════════ ROUND INTRO ══════════════ -->
+<div id="roundIntro" class="screen">
+  <div class="round-intro-card fade-up">
+    <div class="round-icon" id="riIcon"></div>
+    <div class="round-num" id="riNum"></div>
+    <div class="round-pavilion" id="riPavilion"></div>
+    <div class="round-event" id="riEvent"></div>
+    <div class="round-date-pill" id="riDate"></div>
+    <div class="round-qs-info">4 questions · 15 seconds each</div>
+    <button class="btn-primary" onclick="startRound()">Begin Round</button>
+  </div>
+</div>
+
+<!-- ══════════════ QUESTION ══════════════ -->
+<div id="question" class="screen">
+  <div class="q-header" style="width:100%;max-width:420px;">
+    <div class="q-round-label" id="qRoundLabel"></div>
+    <div class="q-score-label">Score: <span id="qScore">0</span></div>
+  </div>
+  <div class="timer-wrap"><div class="timer-bar" id="timerBar"></div></div>
+  <div class="progress-dots" id="progressDots"></div>
+  <div class="q-progress" id="qProgress"></div>
+  <div class="q-text fade-up" id="qText"></div>
+  <div class="options fade-up" id="optionsWrap"></div>
+  <div class="feedback-box" id="feedbackBox"></div>
+  <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next →</button>
+</div>
+
+<!-- ══════════════ ROUND COMPLETE ══════════════ -->
+<div id="roundComplete" class="screen">
+  <div class="round-complete-card pop">
+    <div class="rc-emoji" id="rcEmoji"></div>
+    <div class="rc-title" id="rcTitle"></div>
+    <div class="rc-score" id="rcScore"></div>
+    <div class="rc-sub" id="rcSub"></div>
+    <div id="rcNextWrap">
+      <div class="rc-next-label" id="rcNextLabel"></div>
+      <button class="btn-primary" id="rcNextBtn" onclick="nextRound()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ GAME COMPLETE ══════════════ -->
+<div id="gameComplete" class="screen">
+  <div class="gc-top fade-up">
+    <div class="dtid-logo" style="margin-top:8px;">
+      <div class="logo-globe">
+        <svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="11" stroke="white" stroke-width="1.5"/><ellipse cx="13" cy="13" rx="5" ry="11" stroke="white" stroke-width="1.5"/><line x1="2" y1="13" x2="24" y2="13" stroke="white" stroke-width="1.5"/><line x1="4" y1="8" x2="22" y2="8" stroke="white" stroke-width="1.2"/><line x1="4" y1="18" x2="22" y2="18" stroke="white" stroke-width="1.2"/></svg>
+      </div>
+      <div class="logo-text"><span class="dtid">DTID</span><span class="sub">COP31 · Antalya</span></div>
+    </div>
+    <div class="gc-badge" id="gcBadge"></div>
+    <div class="gc-badge-name" id="gcBadgeName"></div>
+    <div class="gc-badge-sub" id="gcBadgeSub"></div>
+    <div class="gc-score-ring" id="gcRing">
+      <div class="gc-score-inner">
+        <div class="gc-score-num" id="gcScoreNum"></div>
+        <div class="gc-score-denom" id="gcScoreDenom"></div>
+      </div>
+    </div>
+  </div>
+  <div class="gc-round-breakdown">
+    <div class="gc-rb-title">Round Breakdown</div>
+    <div id="gcBreakdown"></div>
+  </div>
+  <div class="gc-bottom">
+    <div class="share-box" id="shareBox"></div>
+    <button class="btn-share" onclick="copyScore()">📋 Copy Score to Share</button>
+    <div class="copied-msg" id="copiedMsg"></div>
+    <button class="btn-secondary" onclick="restartGame()">Play Again</button>
+    <button class="btn-secondary" style="margin-top:8px;" onclick="showLeaderboard()">Leaderboard</button>
+  </div>
+</div>
+
+<!-- ══════════════ LEADERBOARD ══════════════ -->
+<div id="leaderboard" class="screen">
+  <div class="dtid-logo fade-up" style="margin-top:8px; align-self:flex-start;">
+    <div class="logo-globe">
+      <svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="11" stroke="white" stroke-width="1.5"/><ellipse cx="13" cy="13" rx="5" ry="11" stroke="white" stroke-width="1.5"/><line x1="2" y1="13" x2="24" y2="13" stroke="white" stroke-width="1.5"/><line x1="4" y1="8" x2="22" y2="8" stroke="white" stroke-width="1.2"/><line x1="4" y1="18" x2="22" y2="18" stroke="white" stroke-width="1.2"/></svg>
+    </div>
+    <div class="logo-text"><span class="dtid">DTID</span><span class="sub">COP31 Leaderboard</span></div>
+  </div>
+  <div class="lb-title">🏆 Top Players</div>
+  <div class="lb-list" id="lbList"></div>
+  <button class="btn-secondary" style="width:100%;max-width:380px;margin-top:16px;" onclick="showScreen('welcome')">← Back</button>
+</div>
+
+<script>
+const ROUNDS = [
+  {
+    num: 1, icon: '🌾', pavilion: 'Türkiye Pavilion', date: 'Mon 9 Nov · 12:30–13:00',
+    event: 'Closing the Climate Loss Gap: AI Early Warning and Instant Parametric Relief for Anatolian Agriculture',
+    questions: [
+      {
+        q: 'What does parametric insurance pay out based on?',
+        opts: ['Assessed physical damage after inspection','A pre-agreed measurable trigger, such as rainfall levels or temperature thresholds','The farmer\'s own claim and estimate','Government-appointed assessor\'s report'],
+        ans: 1,
+        fb: 'Parametric insurance pays out automatically when a measurable trigger (like rainfall below a threshold) is hit — no loss assessment needed. This makes it fast and ideal for climate events.'
+      },
+      {
+        q: 'What is the primary benefit of AI early warning systems for farmers?',
+        opts: ['Guaranteed higher crop yields','Advance notice so farmers can take protective action before a climate event','Free access to irrigation infrastructure','Automatic subsidy payments'],
+        ans: 1,
+        fb: 'AI early warning systems analyse satellite data, weather models and sensors to give farmers hours or days of advance notice — time to protect livestock, crops and livelihoods.'
+      },
+      {
+        q: '"Loss and damage" in climate negotiations refers to:',
+        opts: ['Losses from bad investment decisions','Harm caused by climate impacts that cannot be fully avoided through mitigation or adaptation','Damage to trade relationships','Legal disputes between nations'],
+        ans: 1,
+        fb: 'Loss and damage refers to the unavoidable harm from climate change — when mitigation and adaptation are no longer enough. It became a formal agenda item at COP27 and a dedicated fund was agreed.'
+      },
+      {
+        q: 'Earth observation satellites support climate early warning by:',
+        opts: ['Sending emergency alerts directly to farmers\'s phones','Monitoring crop stress, soil moisture, deforestation and weather patterns from space in near real time','Controlling irrigation systems remotely','Forecasting commodity prices'],
+        ans: 1,
+        fb: 'Earth observation satellites provide continuous, wide-area monitoring. Combined with AI, they can detect early signs of drought, flood risk, crop failure and deforestation weeks in advance.'
+      }
+    ]
+  },
+  {
+    num: 2, icon: '📡', pavilion: 'Italy Pavilion', date: 'Thu 12 Nov · 17:30–19:00',
+    event: 'From Climate Data to Climate Resilience: Scaling Risk Intelligence, Digital Infrastructure and Transparency for Climate Action',
+    questions: [
+      {
+        q: 'ECMWF (co-partner of the Italy Pavilion event) is best known for:',
+        opts: ['Managing the EU carbon market','Producing some of the world\'s most accurate medium-range weather forecasts','Operating Europe\'s satellite network','Setting EU climate policy'],
+        ans: 1,
+        fb: 'ECMWF — the European Centre for Medium-Range Weather Forecasts — runs global weather models that are the foundation for climate risk intelligence and early warning systems worldwide.'
+      },
+      {
+        q: '"Climate transparency" in digital infrastructure primarily means:',
+        opts: ['Making climate reports publicly available on websites','Clear, verifiable and standardised reporting of emissions reductions and adaptation actions so they can be tracked and trusted','Transparent pricing of carbon credits','Making AI models open source'],
+        ans: 1,
+        fb: 'Climate transparency means countries and organisations can prove their climate commitments are real and being delivered — using digital tools to collect, verify and share data consistently.'
+      },
+      {
+        q: 'Risk intelligence for climate resilience goes beyond traditional risk assessment by:',
+        opts: ['Focusing only on financial risk','Using real-time data, predictive models and AI to anticipate climate hazards before they cause harm','Replacing insurance entirely','Measuring historical losses only'],
+        ans: 1,
+        fb: 'Risk intelligence combines Earth observation, climate models, AI and local data to give decision-makers forward-looking, actionable insights — not just a record of what has already happened.'
+      },
+      {
+        q: 'Digital infrastructure for climate action includes which of the following?',
+        opts: ['Only 5G networks','Data platforms, early warning systems, monitoring networks and interoperability standards','Social media platforms','Banking software only'],
+        ans: 1,
+        fb: 'Climate digital infrastructure spans the whole data pipeline: collection (sensors, satellites), processing (AI, cloud), distribution (APIs, platforms) and reporting standards — all working together.'
+      }
+    ]
+  },
+  {
+    num: 3, icon: '🌿', pavilion: 'Greece Pavilion', date: 'Fri 13 Nov · 16:00–17:00',
+    event: 'Financing Nature and Climate Resilience: Regenerative Finance, International Law and Emerging Digital Technologies',
+    questions: [
+      {
+        q: 'Regenerative Finance (ReFi) aims primarily to:',
+        opts: ['Maximise short-term financial returns','Direct capital flows toward regenerating natural ecosystems and social systems alongside financial returns','Replace central banks','Deregulate financial markets'],
+        ans: 1,
+        fb: 'ReFi uses digital tools — often blockchain — to redirect capital toward projects that restore ecosystems, reduce carbon and build community resilience, measuring impact alongside financial return.'
+      },
+      {
+        q: 'Which technology underpins most ReFi and digital carbon credit platforms?',
+        opts: ['Traditional banking ledgers','Distributed ledger technology (blockchain), enabling transparent, immutable records of environmental assets','Spreadsheet databases','Social media networks'],
+        ans: 1,
+        fb: 'Blockchain provides the immutable audit trail that makes tokenised carbon and biodiversity credits credible — every issuance, transfer and retirement can be tracked and verified on-chain.'
+      },
+      {
+        q: 'Nature-based solutions (NbS) for climate include:',
+        opts: ['Carbon capture machines and industrial filters','Reforestation, wetland restoration, soil carbon management and sustainable agriculture practices','Nuclear energy and renewables','Electric vehicles and green hydrogen'],
+        ans: 1,
+        fb: 'Nature-based solutions use or mimic natural processes to absorb carbon and build resilience. They are often the most cost-effective climate investments, with strong co-benefits for biodiversity and communities.'
+      },
+      {
+        q: 'The main purpose of biodiversity credits is to:',
+        opts: ['Fund fossil fuel transitions','Create a market mechanism to finance the protection and restoration of ecosystems and biodiversity','Replace carbon credits entirely','Pay countries for joining the CBD'],
+        ans: 1,
+        fb: 'Biodiversity credits represent a measured unit of biodiversity gain. They create a market incentive for landowners and project developers to protect and restore habitats — complementing but distinct from carbon credits.'
+      }
+    ]
+  },
+  {
+    num: 4, icon: '💰', pavilion: 'EIB / Benelux Pavilion', date: 'Sat 14 Nov · 09:30–11:00',
+    event: 'Regenerative Finance (ReFi): Mobilising Capital for Positive Environmental and Social Impact',
+    questions: [
+      {
+        q: 'Blended finance combines:',
+        opts: ['Multiple currencies in one account','Public or concessional funds with private investment to reduce risk and crowd in capital for development projects','Different investment banks merging together','Grants and loans from the same government agency'],
+        ans: 1,
+        fb: 'Blended finance uses public or philanthropic money as a risk buffer — absorbing first losses or guaranteeing returns — to make it safe enough for private investors to commit capital to projects they would otherwise avoid.'
+      },
+      {
+        q: 'The main barrier preventing private capital from flowing to climate projects in developing countries is:',
+        opts: ['Lack of interest from investors','Perceived risk — including currency, policy, regulatory and execution risk — that makes returns unattractive without de-risking mechanisms','Too many competing projects','Absence of mobile banking'],
+        ans: 1,
+        fb: 'Private investors face compounded risks in emerging markets. Blended finance instruments — guarantees, first-loss facilities, concessional loans — absorb or mitigate these risks enough to unlock commercial capital.'
+      },
+      {
+        q: 'A "first-loss guarantee" in development finance means:',
+        opts: ['The first investor to lose money is compensated by the government','Public or development finance takes the initial losses in a project, protecting private investors and incentivising their participation','A guarantee that no money will be lost','An insurance policy for natural disasters'],
+        ans: 1,
+        fb: 'First-loss facilities are a key de-risking tool. By committing to absorb the first tranche of losses, a development bank or public fund makes the investment safe enough for private capital — without fully subsidising it.'
+      },
+      {
+        q: 'Which metric best defines a successful blended finance outcome?',
+        opts: ['Maximum grant disbursement','Private capital mobilised per unit of public funds deployed, alongside measurable environmental and social impact','Number of countries involved','Speed of transaction closure'],
+        ans: 1,
+        fb: 'The core measure of blended finance effectiveness is leverage — how much private capital every dollar of public money attracts — combined with verified impact. High leverage with low impact is not a success.'
+      }
+    ]
+  },
+  {
+    num: 5, icon: '🤝', pavilion: 'CARICOM Pavilion', date: 'Mon 16 Nov · 16:00–17:30',
+    event: 'AI and Climate Negotiations: Practical Basics for COP Meeting Preparation',
+    questions: [
+      {
+        q: 'SIDS — a key group at COP — stands for:',
+        opts: ['Special International Development States','Small Island Developing States','Southern Infrastructure Development Systems','Sovereign Island Dialogue Sessions'],
+        ans: 1,
+        fb: 'Small Island Developing States are among the most climate-vulnerable nations on Earth, contributing least to emissions but facing the highest risks. They form a powerful negotiating bloc at COP, often driving ambition on 1.5°C targets.'
+      },
+      {
+        q: 'How can AI most practically help small delegations at COP?',
+        opts: ['By voting on their behalf in negotiating sessions','By rapidly analysing hundreds of pages of COP documents, tracking negotiation issues and generating briefing notes across multiple language streams','By replacing experienced negotiators entirely','By managing delegation travel logistics'],
+        ans: 1,
+        fb: 'Large delegations have dozens of technical experts. Small delegations may have one or two. AI can narrow that gap by processing documents quickly, surfacing relevant text changes and helping negotiators stay across all streams simultaneously.'
+      },
+      {
+        q: 'The main risk of using commercial AI services for sensitive negotiation text is:',
+        opts: ['The AI is too slow to be useful in real time','Data entered into commercial services may be stored, processed or used by the provider — raising confidentiality, jurisdiction and sovereignty concerns','Commercial AI is always less accurate than open models','It is too expensive for small delegations'],
+        ans: 1,
+        fb: 'When sensitive negotiating positions are entered into a commercial AI, the data leaves the delegation\'s control. Depending on the provider\'s terms and jurisdiction, it may be retained or processed — a significant risk for pre-consensus positions.'
+      },
+      {
+        q: 'What advantage do open-source AI models offer to negotiating delegations?',
+        opts: ['They are always more accurate than commercial models','They can be deployed on the organisation\'s own infrastructure, keeping sensitive data entirely under its control','They are free and require no technical expertise','They are automatically updated with the latest COP documents'],
+        ans: 1,
+        fb: 'Open models like Llama, Mistral or Gemma can be run on a delegation\'s own servers or devices — meaning sensitive text never leaves their control. The key point: protection comes from deployment architecture, not the model itself.'
+      }
+    ]
+  }
+];
+
+// ── STATE ──
+let state = {
+  playerName: '',
+  currentRound: 0,
+  currentQ: 0,
+  score: 0,
+  roundScores: [0,0,0,0,0],
+  timerInterval: null,
+  timerVal: 15,
+  answered: false
+};
+
+let leaderboard = [];
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  buildRoundsPreview();
+  document.getElementById('playerName').addEventListener('keydown', e => { if (e.key === 'Enter') startGame(); });
+});
+
+function buildRoundsPreview() {
+  const wrap = document.getElementById('roundsPreview');
+  wrap.innerHTML = ROUNDS.map(r => `
+    <div class="round-pill">
+      <div class="rdate">${r.date.split('·')[0].trim()}</div>
+      <div class="rinfo">
+        <div class="rpav">${r.icon} ${r.pavilion}</div>
+        <div class="rtopic">${r.event.length > 60 ? r.event.substring(0,60)+'…' : r.event}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startGame() {
+  const name = document.getElementById('playerName').value.trim();
+  if (!name) { document.getElementById('playerName').focus(); document.getElementById('playerName').style.borderColor = 'var(--wrong)'; setTimeout(() => document.getElementById('playerName').style.borderColor = '', 1200); return; }
+  state.playerName = name;
+  state.currentRound = 0;
+  state.currentQ = 0;
+  state.score = 0;
+  state.roundScores = [0,0,0,0,0];
+  showRoundIntro();
+}
+
+function showRoundIntro() {
+  const r = ROUNDS[state.currentRound];
+  document.getElementById('riIcon').textContent = r.icon;
+  document.getElementById('riNum').textContent = `Round ${r.num} of 5`;
+  document.getElementById('riPavilion').textContent = r.pavilion;
+  document.getElementById('riEvent').textContent = r.event;
+  document.getElementById('riDate').textContent = r.date;
+  showScreen('roundIntro');
+}
+
+function startRound() {
+  state.currentQ = 0;
+  state.answered = false;
+  showQuestion();
+}
+
+function showQuestion() {
+  const r = ROUNDS[state.currentRound];
+  const q = r.questions[state.currentQ];
+  state.answered = false;
+
+  document.getElementById('qRoundLabel').textContent = `${r.icon} ${r.pavilion}`;
+  document.getElementById('qScore').textContent = state.score;
+  document.getElementById('qProgress').textContent = `Question ${state.currentQ + 1} of ${r.questions.length}`;
+  document.getElementById('qText').textContent = q.q;
+
+  // Progress dots
+  const dots = document.getElementById('progressDots');
+  dots.innerHTML = r.questions.map((_, i) => `<div class="dot ${i < state.currentQ ? 'done' : i === state.currentQ ? 'active' : ''}"></div>`).join('');
+
+  // Options
+  const letters = ['A','B','C','D'];
+  const wrap = document.getElementById('optionsWrap');
+  wrap.innerHTML = q.opts.map((opt, i) => `
+    <button class="opt-btn" onclick="selectAnswer(${i})">
+      <span class="opt-letter">${letters[i]}</span>${opt}
+    </button>
+  `).join('');
+
+  // Feedback + next
+  const fb = document.getElementById('feedbackBox');
+  fb.className = 'feedback-box';
+  fb.textContent = '';
+  const nb = document.getElementById('nextBtn');
+  nb.className = 'next-btn';
+  nb.textContent = state.currentQ < r.questions.length - 1 ? 'Next Question →' : 'Round Results →';
+
+  // Timer
+  startTimer();
+  showScreen('question');
+}
+
+function startTimer() {
+  clearInterval(state.timerInterval);
+  state.timerVal = 15;
+  const bar = document.getElementById('timerBar');
+  bar.style.width = '100%';
+  bar.style.background = 'var(--gn)';
+  state.timerInterval = setInterval(() => {
+    state.timerVal--;
+    const pct = (state.timerVal / 15) * 100;
+    bar.style.width = pct + '%';
+    if (state.timerVal <= 5) bar.style.background = 'var(--wrong)';
+    else if (state.timerVal <= 8) bar.style.background = 'var(--am)';
+    if (state.timerVal <= 0) { clearInterval(state.timerInterval); if (!state.answered) timeOut(); }
+  }, 1000);
+}
+
+function timeOut() {
+  state.answered = true;
+  const q = ROUNDS[state.currentRound].questions[state.currentQ];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach((b, i) => { b.classList.add('disabled'); if (i === q.ans) b.classList.add('correct'); });
+  showFeedback(false, '⏱ Time\'s up! ' + q.fb);
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function selectAnswer(idx) {
+  if (state.answered) return;
+  state.answered = true;
+  clearInterval(state.timerInterval);
+
+  const q = ROUNDS[state.currentRound].questions[state.currentQ];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach((b, i) => {
+    b.classList.add('disabled');
+    if (i === q.ans) b.classList.add('correct');
+    else if (i === idx && idx !== q.ans) b.classList.add('wrong');
+  });
+
+  const correct = idx === q.ans;
+  if (correct) {
+    const pts = Math.max(10, Math.round(10 + state.timerVal * 6));
+    state.score += pts;
+    state.roundScores[state.currentRound] += pts;
+  }
+
+  document.getElementById('qScore').textContent = state.score;
+  showFeedback(correct, (correct ? '✅ Correct! ' : '❌ Not quite. ') + q.fb);
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function showFeedback(correct, text) {
+  const fb = document.getElementById('feedbackBox');
+  fb.className = 'feedback-box show ' + (correct ? 'correct' : 'wrong');
+  fb.textContent = text;
+}
+
+function nextQuestion() {
+  clearInterval(state.timerInterval);
+  const r = ROUNDS[state.currentRound];
+  if (state.currentQ < r.questions.length - 1) {
+    state.currentQ++;
+    showQuestion();
+  } else {
+    showRoundComplete();
+  }
+}
+
+function showRoundComplete() {
+  const r = ROUNDS[state.currentRound];
+  const rs = state.roundScores[state.currentRound];
+  const maxRound = r.questions.length * 100;
+  const pct = Math.round((rs / maxRound) * 100);
+  const emojis = pct >= 80 ? '🌟' : pct >= 60 ? '👍' : pct >= 40 ? '📚' : '💪';
+  const titles = pct >= 80 ? 'Excellent!' : pct >= 60 ? 'Well done!' : pct >= 40 ? 'Keep going!' : 'You\'ll get there!';
+
+  document.getElementById('rcEmoji').textContent = emojis;
+  document.getElementById('rcTitle').textContent = titles;
+  document.getElementById('rcScore').textContent = rs + ' pts';
+  document.getElementById('rcSub').textContent = `${r.pavilion} · ${pct}% accuracy`;
+
+  const isLast = state.currentRound >= ROUNDS.length - 1;
+  document.getElementById('rcNextLabel').textContent = isLast ? '' : 'Up next';
+  const nextBtn = document.getElementById('rcNextBtn');
+  if (isLast) {
+    nextBtn.textContent = 'See Final Results →';
+  } else {
+    const next = ROUNDS[state.currentRound + 1];
+    nextBtn.textContent = `${next.icon} ${next.pavilion} →`;
+  }
+  showScreen('roundComplete');
+}
+
+function nextRound() {
+  if (state.currentRound >= ROUNDS.length - 1) {
+    showGameComplete();
+  } else {
+    state.currentRound++;
+    showRoundIntro();
+  }
+}
+
+function showGameComplete() {
+  const total = ROUNDS.reduce((s,r) => s + r.questions.length, 0);
+  const maxScore = total * 100;
+  const pct = Math.round((state.score / maxScore) * 100);
+
+  const badges = [
+    { min: 85, icon: '🏆', name: 'Climate Pioneer', sub: 'Outstanding knowledge across all five topics' },
+    { min: 65, icon: '🌍', name: 'Climate Champion', sub: 'Strong understanding of climate action and technology' },
+    { min: 45, icon: '🌱', name: 'Climate Advocate', sub: 'Good foundations — keep exploring the topics' },
+    { min: 0,  icon: '🌤', name: 'Climate Learner', sub: 'Great start — visit the pavilion events to learn more' }
+  ];
+  const badge = badges.find(b => pct >= b.min);
+
+  document.getElementById('gcBadge').textContent = badge.icon;
+  document.getElementById('gcBadgeName').textContent = badge.name;
+  document.getElementById('gcBadgeSub').textContent = badge.sub;
+  document.getElementById('gcScoreNum').textContent = state.score;
+  document.getElementById('gcScoreDenom').textContent = `/ ${maxScore}`;
+
+  const ring = document.getElementById('gcRing');
+  ring.style.setProperty('--pct', pct + '%');
+
+  // Breakdown
+  const breakdown = document.getElementById('gcBreakdown');
+  breakdown.innerHTML = ROUNDS.map((r,i) => `
+    <div class="gc-rb-row">
+      <span class="pav">${r.icon} ${r.pavilion}</span>
+      <span class="sc">${state.roundScores[i]} pts</span>
+    </div>
+  `).join('');
+
+  // Share text
+  const shareText = `🌍 COP31 Climate Challenge\n${state.playerName}: ${state.score}/${maxScore} pts (${pct}%) · ${badge.icon} ${badge.name}\nAntalya, Türkiye 2026 · DTID`;
+  document.getElementById('shareBox').textContent = shareText;
+
+  // Save to leaderboard
+  leaderboard.push({ name: state.playerName, score: state.score, pct, badge: badge.icon });
+  leaderboard.sort((a,b) => b.score - a.score);
+  if (leaderboard.length > 20) leaderboard.length = 20;
+
+  showScreen('gameComplete');
+}
+
+function copyScore() {
+  const text = document.getElementById('shareBox').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => flashCopied());
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    flashCopied();
+  }
+}
+
+function flashCopied() {
+  const el = document.getElementById('copiedMsg');
+  el.textContent = '✅ Copied to clipboard!';
+  setTimeout(() => { el.textContent = ''; }, 2500);
+}
+
+function showLeaderboard() {
+  const list = document.getElementById('lbList');
+  if (!leaderboard.length) {
+    list.innerHTML = '<div class="lb-empty">No scores yet — be the first to play!</div>';
+  } else {
+    const rankClass = ['gold','silver','bronze'];
+    list.innerHTML = leaderboard.map((e,i) => `
+      <div class="lb-row">
+        <div class="lb-rank ${rankClass[i] || ''}">${i+1}</div>
+        <div class="lb-name">${e.badge} ${e.name}</div>
+        <div>
+          <div class="lb-score">${e.score}</div>
+          <div class="lb-pct">${e.pct}%</div>
+        </div>
+      </div>
+    `).join('');
+  }
+  showScreen('leaderboard');
+}
+
+function restartGame() {
+  showScreen('welcome');
+  document.getElementById('playerName').value = '';
+}
+</script>
+</body>
+</html>
