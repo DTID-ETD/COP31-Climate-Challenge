@@ -177,7 +177,7 @@
   </div>
   <div class="welcome-top fade-up">
     <div class="game-title">🌍 Climate Challenge</div>
-    <div class="game-subtitle">5 rounds · 20 questions · 3 minutes</div>
+    <div class="game-subtitle">5 rounds · 20 questions · up to 5 minutes</div>
     <div class="rounds-preview" id="roundsPreview"></div>
   </div>
   <div class="welcome-bottom fade-up">
@@ -463,8 +463,18 @@ let state = {
   roundScores: [0,0,0,0,0],
   timerInterval: null,
   timerVal: 15,
-  answered: false
+  answered: false,
+  currentShuffled: null
 };
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#x27;');
+}
 
 let leaderboard = [];
 
@@ -747,7 +757,7 @@ async function showLeaderboard() {
     list.innerHTML = top.map((e,i) => `
       <div class="lb-row">
         <div class="lb-rank ${rankClass[i] || ''}">${i+1}</div>
-        <div class="lb-name">${e.badge} ${e.name}</div>
+        <div class="lb-name">${escHtml(e.badge)} ${escHtml(e.name)}</div>
         <div>
           <div class="lb-score">${e.score}</div>
           <div class="lb-pct">${e.pct}%</div>
