@@ -490,10 +490,21 @@ function startRound() {
   showQuestion();
 }
 
+function shuffleOpts(q) {
+  const idx = [0,1,2,3];
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return { opts: idx.map(i => q.opts[i]), ans: idx.indexOf(q.ans), fb: q.fb, q: q.q };
+}
+
 function showQuestion() {
   const r = ROUNDS[state.currentRound];
-  const q = r.questions[state.currentQ];
+  const raw = r.questions[state.currentQ];
+  const q = shuffleOpts(raw);
   state.answered = false;
+  state.currentShuffled = q;
 
   document.getElementById('qRoundLabel').textContent = `${r.icon} ${r.pavilion}`;
   document.getElementById('qScore').textContent = state.score;
@@ -544,7 +555,7 @@ function startTimer() {
 
 function timeOut() {
   state.answered = true;
-  const q = ROUNDS[state.currentRound].questions[state.currentQ];
+  const q = state.currentShuffled;
   const btns = document.querySelectorAll('.opt-btn');
   btns.forEach((b, i) => { b.classList.add('disabled'); if (i === q.ans) b.classList.add('correct'); });
   showFeedback(false, '⏱ Time\'s up! ' + q.fb);
@@ -556,7 +567,7 @@ function selectAnswer(idx) {
   state.answered = true;
   clearInterval(state.timerInterval);
 
-  const q = ROUNDS[state.currentRound].questions[state.currentQ];
+  const q = state.currentShuffled;
   const btns = document.querySelectorAll('.opt-btn');
   btns.forEach((b, i) => {
     b.classList.add('disabled');
