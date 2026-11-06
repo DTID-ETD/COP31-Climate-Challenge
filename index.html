@@ -35,11 +35,19 @@
   .logo-text .sub { font-size: 9px; color: var(--muted); letter-spacing: .3px; line-height: 1.3; }
   .cop-badge { background: var(--am); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: .5px; margin-top: 2px; }
 
+  /* ── DTID HERO ── */
+  .dtid-hero { width: 100%; background: var(--dk); border-radius: 0 0 24px 24px; padding: 28px 20px 24px; display: flex; flex-direction: column; align-items: center; margin: -24px -20px 0; width: calc(100% + 40px); }
+  .hero-globe { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; border: 2px solid rgba(255,255,255,.25); }
+  .hero-globe svg { width: 44px; height: 44px; }
+  .hero-dtid { font-size: 36px; font-weight: 900; color: #fff; letter-spacing: 3px; line-height: 1; margin-bottom: 4px; }
+  .hero-full { font-size: 11px; color: rgba(255,255,255,.75); letter-spacing: .4px; text-align: center; line-height: 1.4; margin-bottom: 14px; }
+  .hero-cop-badge { background: var(--am); color: #fff; font-size: 12px; font-weight: 700; padding: 5px 16px; border-radius: 20px; letter-spacing: .5px; }
+
   /* ── WELCOME ── */
-  #welcome { justify-content: space-between; }
-  .welcome-top { width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
-  .game-title { font-size: 28px; font-weight: 800; color: var(--dk); text-align: center; margin: 20px 0 6px; line-height: 1.15; }
-  .game-subtitle { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 24px; }
+  #welcome { justify-content: space-between; padding-top: 0; }
+  .welcome-top { width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+  .game-title { font-size: 26px; font-weight: 800; color: var(--dk); text-align: center; margin: 0 0 6px; line-height: 1.15; }
+  .game-subtitle { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 20px; }
   .rounds-preview { width: 100%; max-width: 380px; }
   .round-pill { display: flex; align-items: center; gap: 12px; background: var(--white); border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(12,62,77,.08); }
   .round-pill .rdate { font-size: 11px; font-weight: 700; color: var(--white); background: var(--dk); border-radius: 6px; padding: 3px 7px; white-space: nowrap; }
@@ -153,24 +161,22 @@
 
 <!-- ══════════════ WELCOME ══════════════ -->
 <div id="welcome" class="screen active">
-  <div class="welcome-top fade-up">
-    <div class="dtid-logo">
-      <div class="logo-globe">
-        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="13" cy="13" r="11" stroke="white" stroke-width="1.5"/>
-          <ellipse cx="13" cy="13" rx="5" ry="11" stroke="white" stroke-width="1.5"/>
-          <line x1="2" y1="13" x2="24" y2="13" stroke="white" stroke-width="1.5"/>
-          <line x1="4" y1="8" x2="22" y2="8" stroke="white" stroke-width="1.2"/>
-          <line x1="4" y1="18" x2="22" y2="18" stroke="white" stroke-width="1.2"/>
-        </svg>
-      </div>
-      <div class="logo-text">
-        <span class="dtid">DTID</span>
-        <span class="sub">Digital Technology Institute<br>for Development</span>
-      </div>
+  <div class="dtid-hero">
+    <div class="hero-globe">
+      <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="22" cy="22" r="18" stroke="white" stroke-width="2"/>
+        <ellipse cx="22" cy="22" rx="8" ry="18" stroke="white" stroke-width="2"/>
+        <line x1="4" y1="22" x2="40" y2="22" stroke="white" stroke-width="2"/>
+        <line x1="6" y1="14" x2="38" y2="14" stroke="white" stroke-width="1.5"/>
+        <line x1="6" y1="30" x2="38" y2="30" stroke="white" stroke-width="1.5"/>
+      </svg>
     </div>
-    <div class="cop-badge">COP31 · ANTALYA · TÜRKIYE · 2026</div>
-    <div class="game-title">Climate Challenge</div>
+    <div class="hero-dtid">DTID</div>
+    <div class="hero-full">Digital Technology Institute for Development</div>
+    <div class="hero-cop-badge">COP31 · ANTALYA · TÜRKIYE · 2026</div>
+  </div>
+  <div class="welcome-top fade-up">
+    <div class="game-title">🌍 Climate Challenge</div>
     <div class="game-subtitle">5 rounds · 20 questions · 3 minutes</div>
     <div class="rounds-preview" id="roundsPreview"></div>
   </div>
@@ -424,6 +430,30 @@ const ROUNDS = [
   }
 ];
 
+// ── FIREBASE ──
+const DB = 'https://dtid-cop31-f9380-default-rtdb.europe-west1.firebasedatabase.app';
+
+async function saveToFirebase(name, score, pct, badge) {
+  try {
+    await fetch(`${DB}/leaderboard.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, score, pct, badge, ts: Date.now() })
+    });
+  } catch(e) { console.warn('Firebase save failed', e); }
+}
+
+async function loadFromFirebase() {
+  try {
+    const res = await fetch(`${DB}/leaderboard.json`);
+    const data = await res.json();
+    if (!data) return [];
+    return Object.values(data)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 20);
+  } catch(e) { console.warn('Firebase load failed', e); return []; }
+}
+
 // ── STATE ──
 let state = {
   playerName: '',
@@ -673,7 +703,8 @@ function showGameComplete() {
   const shareText = `🌍 COP31 Climate Challenge\n${state.playerName}: ${state.score}/${maxScore} pts (${pct}%) · ${badge.icon} ${badge.name}\nAntalya, Türkiye 2026 · DTID`;
   document.getElementById('shareBox').textContent = shareText;
 
-  // Save to leaderboard
+  // Save to Firebase + local
+  saveToFirebase(state.playerName, state.score, pct, badge.icon);
   leaderboard.push({ name: state.playerName, score: state.score, pct, badge: badge.icon });
   leaderboard.sort((a,b) => b.score - a.score);
   if (leaderboard.length > 20) leaderboard.length = 20;
@@ -699,13 +730,21 @@ function flashCopied() {
   setTimeout(() => { el.textContent = ''; }, 2500);
 }
 
-function showLeaderboard() {
+async function showLeaderboard() {
+  showScreen('leaderboard');
   const list = document.getElementById('lbList');
-  if (!leaderboard.length) {
+  list.innerHTML = '<div class="lb-empty">Loading scores…</div>';
+  const scores = await loadFromFirebase();
+  const all = [...scores];
+  // merge any local scores not yet in Firebase
+  leaderboard.forEach(l => { if (!all.find(s => s.name === l.name && s.score === l.score)) all.push(l); });
+  all.sort((a,b) => b.score - a.score);
+  const top = all.slice(0,20);
+  if (!top.length) {
     list.innerHTML = '<div class="lb-empty">No scores yet — be the first to play!</div>';
   } else {
     const rankClass = ['gold','silver','bronze'];
-    list.innerHTML = leaderboard.map((e,i) => `
+    list.innerHTML = top.map((e,i) => `
       <div class="lb-row">
         <div class="lb-rank ${rankClass[i] || ''}">${i+1}</div>
         <div class="lb-name">${e.badge} ${e.name}</div>
@@ -716,7 +755,6 @@ function showLeaderboard() {
       </div>
     `).join('');
   }
-  showScreen('leaderboard');
 }
 
 function restartGame() {
