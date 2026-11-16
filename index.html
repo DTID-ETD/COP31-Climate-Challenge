@@ -150,6 +150,29 @@
   .dot.done { background: var(--gn); }
   .dot.active { background: var(--am); width: 20px; border-radius: 4px; }
 
+  /* ── ROUND SELECT ── */
+  #roundSelect { justify-content: flex-start; padding-top: 0; }
+  .rs-heading { font-size: 20px; font-weight: 800; color: var(--dk); margin: 20px 0 4px; text-align: center; }
+  .rs-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; text-align: center; }
+  .rs-list { width: 100%; max-width: 400px; }
+  .rs-all-btn { width: 100%; padding: 15px 18px; background: var(--dk); color: var(--white); border: none; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+  .rs-all-btn:active { opacity: .85; }
+  .rs-all-icon { font-size: 22px; }
+  .rs-all-info { flex: 1; text-align: left; }
+  .rs-all-title { font-size: 15px; font-weight: 700; }
+  .rs-all-desc { font-size: 11px; opacity: .8; margin-top: 2px; }
+  .rs-divider { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px; }
+  .rs-divider span { font-size: 11px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .rs-divider::before, .rs-divider::after { content: ''; flex: 1; height: 1px; background: #D0E4EC; }
+  .rs-card { width: 100%; padding: 13px 16px; background: var(--white); border: 2px solid #D0E4EC; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; gap: 12px; margin-bottom: 9px; transition: border-color .15s, box-shadow .15s; text-align: left; }
+  .rs-card:active { border-color: var(--dk); box-shadow: 0 2px 10px rgba(12,62,77,.15); }
+  .rs-card-icon { font-size: 26px; flex-shrink: 0; }
+  .rs-card-info { flex: 1; }
+  .rs-card-pav { font-size: 12px; font-weight: 700; color: var(--am); text-transform: uppercase; letter-spacing: .4px; }
+  .rs-card-event { font-size: 13px; color: var(--text); font-weight: 600; line-height: 1.3; margin: 2px 0; }
+  .rs-card-date { font-size: 11px; color: var(--muted); }
+  .rs-card-qs { font-size: 11px; font-weight: 700; color: var(--white); background: var(--gn); border-radius: 20px; padding: 3px 9px; flex-shrink: 0; }
+
   /* ── ANIMATIONS ── */
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   .fade-up { animation: fadeUp .3s ease both; }
@@ -177,7 +200,7 @@
   </div>
   <div class="welcome-top fade-up">
     <div class="game-title">🌍 Climate Challenge</div>
-    <div class="game-subtitle">5 rounds · 20 questions · up to 5 minutes</div>
+    <div class="game-subtitle">Pick one pavilion or play all 5 events</div>
     <div class="rounds-preview" id="roundsPreview"></div>
   </div>
   <div class="welcome-bottom fade-up">
@@ -186,6 +209,23 @@
     <button class="btn-primary" onclick="startGame()">Start Challenge</button>
     <button class="btn-secondary" onclick="showLeaderboard()">View Leaderboard</button>
     <div class="game-note">All times local to Türkiye · DTID ETD Division</div>
+  </div>
+</div>
+
+<!-- ══════════════ ROUND SELECT ══════════════ -->
+<div id="roundSelect" class="screen">
+  <div class="rs-heading">Choose Your Event</div>
+  <div class="rs-sub">Play one pavilion event (~1 min) or all five</div>
+  <div class="rs-list">
+    <button class="rs-all-btn" onclick="selectRounds(-1)">
+      <span class="rs-all-icon">🌍</span>
+      <div class="rs-all-info">
+        <div class="rs-all-title">Play All 5 Events</div>
+        <div class="rs-all-desc">20 questions · full challenge · ~5 min</div>
+      </div>
+    </button>
+    <div class="rs-divider"><span>OR PICK ONE</span></div>
+    <div id="rsCards"></div>
   </div>
 </div>
 
@@ -464,7 +504,9 @@ let state = {
   timerInterval: null,
   timerVal: 15,
   answered: false,
-  currentShuffled: null
+  currentShuffled: null,
+  roundsToPlay: [],
+  roundIndex: 0
 };
 
 function escHtml(str) {
@@ -507,17 +549,39 @@ function startGame() {
   const name = document.getElementById('playerName').value.trim();
   if (!name) { document.getElementById('playerName').focus(); document.getElementById('playerName').style.borderColor = 'var(--wrong)'; setTimeout(() => document.getElementById('playerName').style.borderColor = '', 1200); return; }
   state.playerName = name;
-  state.currentRound = 0;
-  state.currentQ = 0;
   state.score = 0;
   state.roundScores = [0,0,0,0,0];
+  buildRoundSelect();
+  showScreen('roundSelect');
+}
+
+function buildRoundSelect() {
+  const wrap = document.getElementById('rsCards');
+  wrap.innerHTML = ROUNDS.map((r, i) => `
+    <button class="rs-card" onclick="selectRounds(${i})">
+      <span class="rs-card-icon">${r.icon}</span>
+      <div class="rs-card-info">
+        <div class="rs-card-pav">${r.pavilion}</div>
+        <div class="rs-card-event">${r.event}</div>
+        <div class="rs-card-date">${r.date}</div>
+      </div>
+      <span class="rs-card-qs">4 Qs</span>
+    </button>
+  `).join('');
+}
+
+function selectRounds(idx) {
+  state.roundsToPlay = idx === -1 ? ROUNDS.map((_,i) => i) : [idx];
+  state.roundIndex = 0;
+  state.currentRound = state.roundsToPlay[0];
+  state.currentQ = 0;
   showRoundIntro();
 }
 
 function showRoundIntro() {
   const r = ROUNDS[state.currentRound];
   document.getElementById('riIcon').textContent = r.icon;
-  document.getElementById('riNum').textContent = `Round ${r.num} of 5`;
+  document.getElementById('riNum').textContent = `Round ${state.roundIndex + 1} of ${state.roundsToPlay.length}`;
   document.getElementById('riPavilion').textContent = r.pavilion;
   document.getElementById('riEvent').textContent = r.event;
   document.getElementById('riDate').textContent = r.date;
@@ -657,29 +721,32 @@ function showRoundComplete() {
   document.getElementById('rcScore').textContent = rs + ' pts';
   document.getElementById('rcSub').textContent = `${r.pavilion} · ${pct}% accuracy`;
 
-  const isLast = state.currentRound >= ROUNDS.length - 1;
+  const isLast = state.roundIndex >= state.roundsToPlay.length - 1;
   document.getElementById('rcNextLabel').textContent = isLast ? '' : 'Up next';
   const nextBtn = document.getElementById('rcNextBtn');
   if (isLast) {
     nextBtn.textContent = 'See Final Results →';
   } else {
-    const next = ROUNDS[state.currentRound + 1];
+    const nextIdx = state.roundsToPlay[state.roundIndex + 1];
+    const next = ROUNDS[nextIdx];
     nextBtn.textContent = `${next.icon} ${next.pavilion} →`;
   }
   showScreen('roundComplete');
 }
 
 function nextRound() {
-  if (state.currentRound >= ROUNDS.length - 1) {
+  if (state.roundIndex >= state.roundsToPlay.length - 1) {
     showGameComplete();
   } else {
-    state.currentRound++;
+    state.roundIndex++;
+    state.currentRound = state.roundsToPlay[state.roundIndex];
+    state.currentQ = 0;
     showRoundIntro();
   }
 }
 
 function showGameComplete() {
-  const total = ROUNDS.reduce((s,r) => s + r.questions.length, 0);
+  const total = state.roundsToPlay.reduce((s,i) => s + ROUNDS[i].questions.length, 0);
   const maxScore = total * 100;
   const pct = Math.round((state.score / maxScore) * 100);
 
@@ -702,15 +769,17 @@ function showGameComplete() {
 
   // Breakdown
   const breakdown = document.getElementById('gcBreakdown');
-  breakdown.innerHTML = ROUNDS.map((r,i) => `
-    <div class="gc-rb-row">
+  breakdown.innerHTML = state.roundsToPlay.map(i => {
+    const r = ROUNDS[i];
+    return `<div class="gc-rb-row">
       <span class="pav">${r.icon} ${r.pavilion}</span>
       <span class="sc">${state.roundScores[i]} pts</span>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   // Share text
-  const shareText = `🌍 COP31 Climate Challenge\n${state.playerName}: ${state.score}/${maxScore} pts (${pct}%) · ${badge.icon} ${badge.name}\nAntalya, Türkiye 2026 · DTID`;
+  const roundsLabel = state.roundsToPlay.length === ROUNDS.length ? '5 rounds' : `${state.roundsToPlay.length} round${state.roundsToPlay.length > 1 ? 's' : ''}`;
+  const shareText = `🌍 COP31 Climate Challenge\n${state.playerName}: ${state.score}/${maxScore} pts (${pct}%) · ${badge.icon} ${badge.name}\n${roundsLabel} · Antalya, Türkiye 2026 · DTID`;
   document.getElementById('shareBox').textContent = shareText;
 
   // Save to Firebase + local
